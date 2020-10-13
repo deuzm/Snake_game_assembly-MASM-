@@ -1,0 +1,50 @@
+Microsoft (R) Macro Assembler Version 5.00                  8/2/14 16:19:21
+                                                             Page     1-1
+
+
+       1 0000				        data segment 
+       2 0000  02			        a db 02h 
+       3 0001  03			        b db 03h 
+       4 0002				        data ends 
+       5				 
+       6 0000				        code segment 
+       7				        assume cs:code, ds:data 
+       8 0000  B8 ---- R		start:  mov ax,data 
+       9 0003  8E D8			        mov ds,ax 
+      10 0005  A0 0000 R		        mov al,a 
+      11 0008  8A 1E 0001 R		        mov bl,b 
+      12 000C  02 C3			        add al,bl 
+      13 000E				        code ends 
+      14				        end start 
+Microsoft (R) Macro Assembler Version 5.00                  8/2/14 16:19:21
+                                                             Symbols-1
+
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+CODE . . . . . . . . . . . . . .  	000E	PARA	NONE	
+DATA . . . . . . . . . . . . . .  	0002	PARA	NONE	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+A  . . . . . . . . . . . . . . .  	L BYTE	0000	DATA
+
+B  . . . . . . . . . . . . . . .  	L BYTE	0001	DATA
+
+START  . . . . . . . . . . . . .  	L NEAR	0000	CODE
+
+@FILENAME  . . . . . . . . . . .  	TEXT  qwe		
+
+
+     14 Source  Lines
+     14 Total   Lines
+      7 Symbols
+
+  50688 + 465856 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors

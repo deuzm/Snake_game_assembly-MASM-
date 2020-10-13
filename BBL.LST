@@ -1,0 +1,71 @@
+Open segments:Microsoft (R) Macro Assembler Version 5.00                  8/14/14 17:38:33
+                                                             Page     1-1
+
+
+
+CODE . . . . . . . . . . . . . .  	
+Microsoft (R) Macro Assembler Version 5.00                  8/14/14 17:38:33
+                                                             Page     1-1
+
+
+       1 0000				        data segment 
+       2 0000  05 01 07 02 09 04	        a db 5,1,7,2,9,4 
+       3 0006				        data ends 
+       4				 
+       5 0000				        code segment 
+       6				        assume  cs:code,ds:data 
+       7 0000  B8 ---- R		start:  mov ax,data 
+       8 0003  8E D8			        mov ds,ax 
+       9 0005  BE 0000			        mov si,00h 
+      10 0008  8A 0E 0005 R		        mov cl,a[5] 
+      11				 
+      12 000C  8A 84 0000 R		up:     mov al,a[si] 
+      13 0010  8A 9C 0001 R		        mov bl,a[si+1] 
+      14 0014  3A C3			        cmp al,bl 
+      15 0016  77 03			        ja swap 
+      16 0018  46			        inc si 
+      17 0019  E2 F1			        loop up 
+      18				 
+      19				 
+      20 001B  86 C3			swap:   xchg al,bl 
+      21 001D  88 9C 0000 R		        mov a[si],bl 
+      22 0021  88 84 0001 R		        mov a[si+1],al 
+      23 0025  46			        inc si 
+      24 0026  E2 E4			        loop up 
+      25				 
+      26				        end start 
+Open segments:
+CODE . . . . . . . . . . . . . .  	
+Microsoft (R) Macro Assembler Version 5.00                  8/14/14 17:38:33
+                                                             Symbols-1
+
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+CODE . . . . . . . . . . . . . .  	0000	PARA	NONE	
+DATA . . . . . . . . . . . . . .  	0006	PARA	NONE	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+A  . . . . . . . . . . . . . . .  	L BYTE	0000	DATA
+
+START  . . . . . . . . . . . . .  	L NEAR	0000	CODE
+SWAP . . . . . . . . . . . . . .  	L NEAR	001B	CODE
+
+UP . . . . . . . . . . . . . . .  	L NEAR	000C	CODE
+
+@FILENAME  . . . . . . . . . . .  	TEXT  bbl		
+
+
+     26 Source  Lines
+     26 Total   Lines
+      8 Symbols
+
+  50458 + 466086 Bytes symbol space free
+
+      0 Warning Errors
+      1 Severe  Errors

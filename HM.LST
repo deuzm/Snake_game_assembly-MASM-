@@ -1,0 +1,682 @@
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-1
+
+
+				.model small 
+ 0100				.stack 100h 
+				  
+ 0000				.data 
+ 0000  ??			    saveMode db ?  
+ 0001  00A0			    currentX dw 160 
+ 0003  0050			    currentY dw 80  
+ 0005  0004			    segmentSize dw 4 ; size of the snake segmen
+				t x,y 
+ 0007  0F			    color db 15   
+ 0008  00			    timePrevious db 0   
+ 0009  0002			    snakeSpeed dw 02h  
+ 000B  0004			    snakeSize dw 4 
+ 000D  0064[			    snakePosX dw 100 dup (?) 
+	   ????			
+			 ]	
+				
+ 00D5  0064[			    snakePosY dw 100 dup (?) 
+	   ????			
+			 ]	
+				
+ 019D  0000			    arrayLength dw 0 
+ 019F  0004			    directionX dw 4 
+ 01A1  0000			    directionY dw 0 
+ 01A3  ????			    randX dw ? 
+ 01A5  ????			    randY dw ? 
+ 01A7  0000			    applePresent dw 0 
+ 01A9  0000			    count dw 0 
+ 01AB  0A			    speed db 10 
+				 
+ 01AC  0D 0A 47 41 4D 45 20	    endString db 13, 10, 'GAME OVER', '$'  
+       4F 56 45 52 24		
+				 
+ 01B8  0000			    i dw 0 
+				     
+ 0000				.code   
+				 
+ 0000				main:   
+ 0000  B8 ---- R		    mov ax, @data 
+ 0003  8E D8			    mov ds, ax 
+				     
+ 0005  B4 0F			    mov ah, 0Fh   
+ 0007  CD 10			    int 10h   
+				     
+ 0009  A2 0000 R		    mov saveMode, al 
+ 000C  B4 00			    mov ah, 0   ; set display mode function. 
+ 000E  B0 13			    mov al, 13h ; mode 13h = 320x200 pixels, 25
+				6 colors. 
+ 0010  CD 10			    int 10h  ; set it!    
+				 
+ 0012				    StartOver: 
+ 0012  C7 06 0001 R 00A0	        mov currentX, 160 
+ 0018  C7 06 0003 R 0050	        mov currentY, 80 
+ 001E  C7 06 000B R 0004	        mov snakeSize, 4 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-2
+
+
+ 0024  C7 06 019D R 0000	        mov arrayLength, 0 
+ 002A  C7 06 01A9 R 0000	        mov count, 0 
+ 0030  C7 06 019F R 0004	        mov directionX, 4 
+ 0036  C7 06 01A1 R 0000	        mov directionY, 0 
+ 003C  8B 16 0003 R		        mov dx, currentY   ;set y 
+ 0040  B9 0000			        mov cx, 0 
+				 
+ 0043  E8 0329 R		        call ClearScreen 
+				         
+				    ;time 
+ 0046				    CheckTime: 
+				         
+ 0046  B4 2C			        mov ah, 2Ch ;ch = hour, cl = minute, dh
+				 = second, dl = 1/100 second 
+ 0048  CD 21			        int 21h   
+				 
+				        ;Adjusting speed 
+ 004A  8A 1E 01AB R		        mov bl, speed 
+ 004E  2B C0			        sub ax, ax 
+ 0050  8A C2			        mov al, dl 
+ 0052  F6 F3			        div bl    
+				 
+ 0054  3A 06 0008 R		        cmp al, timePrevious   ;is the current 
+				time equal to previoustime 
+ 0058  74 EC			        je checkTime           ;if its same che
+				ck again 
+				         
+				        ;if its different, then draw, move, etc
+				 
+ 005A  A2 0008 R		        mov  timePrevious, al  ;update time 
+				 
+				        ;Adjusting speed 
+ 005D  2B C0			        sub ax, ax 
+ 005F  8A C2			        mov al, dl 
+ 0061  F6 F3			        div bl 
+				 
+ 0063  E8 0329 R		        call ClearScreen 
+				 
+ 0066  E8 011F R		        call DrawApple 
+				 
+ 0069  E8 00FD R		        call CheckAppleCollision 
+ 006C  E8 00A4 R		        call DisplayCount 
+ 006F  E8 01C2 R		        call ListenForInput 
+ 0072  E8 0233 R		        call MoveHead 
+ 0075  E8 00B1 R		        call CheckEndGame 
+ 0078  E8 0243 R		        call SaveHeadPos 
+ 007B  E8 02B8 R		        call DrawSnake 
+ 007E  A1 019D R		        mov ax, arrayLength 
+				 
+ 0081  EB C3			        jmp CheckTime   
+				 
+ 0083				        EndGame: 
+ 0083  E8 0095 R		        call EndFunction 
+ 0086  B4 00			    mov ah, 0 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-3
+
+
+ 0088  CD 16			    int 16h 
+				     
+ 008A  B4 00			    mov ah, 0 
+ 008C  A0 0000 R		    mov al, saveMode 
+ 008F  CD 10			    int 10h 
+ 0091  B4 4C			    mov ah, 4ch 
+ 0093  CD 21			    int 21h 
+				 
+				 
+ 0095				EndFunction proc 
+ 0095  E8 0329 R		        call ClearScreen 
+				        ;Displaying end string 
+ 0098  BA 01AC R		        mov dx, offset endString 
+ 009B  B4 09			        mov ah, 09h  
+ 009D  CD 21			        int 21h 
+ 009F  B4 01			        mov ah, 01h              
+ 00A1  CD 21			        int 21h 
+ 00A3  C3			        ret 
+				        ;Wait for input 
+ 00A4				EndFunction endp 
+				 
+ 00A4				DisplayCount proc 
+ 00A4  A1 01A9 R		        mov ax, count 
+ 00A7  05 0030			        add ax, '0' 
+ 00AA  8B D0			        mov dx, ax 
+ 00AC  B4 02			        mov ah, 2 
+ 00AE  CD 21			        int 21h 
+				 
+ 00B0  C3			        ret 
+ 00B1				DisplayCount endp 
+				 
+ 00B1				CheckEndGame proc 
+ 00B1				        CheckBounaryCollision: 
+ 00B1  81 3E 0001 R 013C	                cmp currentX, 316 
+ 00B7  7D CA			                jge EndGame 
+ 00B9  83 3E 0001 R 00		                cmp currentX, 0 
+ 00BE  7C C3			                jl EndGame 
+ 00C0  81 3E 0003 R 00C4	                cmp currentY, 196 
+ 00C6  7D BB			                jge EndGame 
+ 00C8  83 3E 0003 R 00		                cmp currentY, 0 
+ 00CD  7C B4			                jl EndGame 
+ 00CF				        CheckSnakeCollision: 
+ 00CF  8B 0E 019D R		                mov cx, arrayLength 
+ 00D3				                CheckSnakeCollisionLoop: 
+ 00D3  BE 000D R		                        mov si, offset snakePos
+				X 
+ 00D6  03 F3			                        add si, bx 
+ 00D8  8B 04			                        mov ax, [si] 
+ 00DA  39 06 0001 R		                        cmp currentX, ax 
+ 00DE  74 0D			                        je checkCollisionY 
+ 00E0				                        continueCheck: 
+ 00E0  83 C3 02			                        add bx, 2 
+ 00E3  E8 02E2 R		                        call DrawSegment 
+ 00E6  49			                        dec cx 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-4
+
+
+ 00E7  83 F9 00			                        cmp cx, 0 
+ 00EA  7F E7			                jg CheckSnakeCollisionLoop 
+ 00EC  C3			                ret 
+ 00ED				                checkCollisionY: 
+ 00ED  BE 00D5 R		                        mov si, offset snakePos
+				Y 
+ 00F0  03 F3			                        add si, bx 
+ 00F2  8B 04			                        mov ax, [si] 
+ 00F4  39 06 0003 R		                        cmp currentY, ax 
+ 00F8  74 89			                        je EndGame 
+ 00FA  75 E4			                        jne continueCheck 
+				                ; mov currentY, ax 
+ 00FC  C3			        ret 
+ 00FD				CheckEndGame endp 
+				 
+ 00FD				CheckAppleCollision proc  
+ 00FD  A1 0001 R		        mov ax, currentX 
+ 0100  8B 1E 0003 R		        mov bx, currentY 
+ 0104  3B 06 01A3 R		        cmp ax, randX 
+ 0108  74 01			        je xequal 
+ 010A  C3			        ret 
+ 010B				        xequal: 
+ 010B  3B 1E 01A5 R		                cmp bx, randY 
+ 010F  74 01			                je colided 
+ 0111  C3			                ret 
+ 0112				        colided: 
+ 0112  FF 06 01A9 R		                inc count 
+ 0116  FF 06 000B R		                inc snakeSize 
+ 011A  FF 0E 01A7 R		                dec applePresent 
+ 011E  C3			                ret 
+				 
+ 011F				CheckAppleCollision endp 
+				 
+ 011F				DrawApple proc 
+ 011F  A1 0001 R		        mov ax, currentX 
+ 0122  8B 1E 0003 R		        mov bx, currentY 
+ 0126  50			        push ax 
+ 0127  53			        push bx 
+ 0128  83 3E 01A7 R 00		                cmp applePresent, 0 
+ 012D  74 1C			                je setCoords 
+ 012F				                okk: 
+ 012F  A1 01A3 R		                        mov ax, randX 
+ 0132  A3 0001 R		                        mov currentX, ax 
+ 0135  A1 01A5 R		                        mov ax, randY 
+ 0138  A3 0003 R		                        mov currentY, ax 
+ 013B  C6 06 0007 R 0C		                        mov color, 12 
+ 0140  E8 02E2 R		                        call DrawSegment 
+ 0143  C6 06 0007 R 0D		                        mov color, 13 
+ 0148  EB 0A 90			                        jmp exit 
+ 014B				                 setCoords: 
+ 014B  E8 015E R		                call SetAppleCoords 
+ 014E  FF 06 01A7 R		                inc applePresent 
+ 0152  EB DB			                jmp okk 
+ 0154				exit: 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-5
+
+
+ 0154  5B			        pop bx 
+ 0155  58			        pop ax 
+ 0156  A3 0001 R		        mov currentX, ax 
+ 0159  89 1E 0003 R		        mov currentY, bx 
+ 015D  C3			        ret 
+ 015E				DrawApple endp 
+				 
+				 
+ 015E				SetAppleCoords proc 
+				        ;Setting x for an apple 
+ 015E				        SetX: 
+ 015E  E8 01B4 R		                call GetRandomNumber 
+ 0161  BA 0014			                mov dx, 20 
+ 0164  83 FA 46			                cmp dx, 70 
+ 0167  7D 24			                jge subX 
+ 0169  8B C2			                mov ax, dx 
+ 016B  33 D2			                xor dx, dx 
+ 016D  BA 0004			                mov dx, 4 
+ 0170  F7 E2			                mul dx          ;mul to set app
+				le to coords 
+ 0172  A3 01A3 R		                mov randX, ax 
+ 0175				        SetY: 
+ 0175  E8 01B4 R		                call GetRandomNumber 
+ 0178  BA 0014			                mov dx, 20 
+ 017B  83 FA 1E			                cmp dx, 30 
+ 017E  7D 22			                jge subY 
+ 0180  8B C2			                mov ax, dx 
+ 0182  33 D2			                xor dx, dx 
+ 0184  BA 0004			                mov dx, 4 
+ 0187  F7 E2			                mul dx  
+ 0189  A3 01A5 R		                mov randY, ax 
+ 018C  C3			                ret 
+ 018D				        subX: 
+ 018D  83 EA 46			                sub dx, 70 
+ 0190  89 16 01A3 R		                mov randX, dx 
+ 0194  8B C2			                mov ax, dx 
+ 0196  33 D2			                xor dx, dx 
+ 0198  BA 0004			                mov dx, 4 
+ 019B  F7 E2			                mul dx  
+ 019D  A3 01A3 R		                mov randX, ax 
+ 01A0  EB D3			                jmp SetY 
+ 01A2				        subY: 
+ 01A2  83 EA 1E			                sub dx, 30 
+ 01A5  89 16 01A5 R		                mov randY, dx 
+ 01A9  8B C2			                mov ax, dx 
+ 01AB  BA 0004			                mov dx, 4 
+ 01AE  F7 E2			                mul dx  
+ 01B0  A3 01A5 R		                mov randY, ax 
+ 01B3  C3			                ret 
+				 
+ 01B4				SetAppleCoords endp 
+				 
+				 
+				 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-6
+
+
+ 01B4				GetRandomNumber proc 
+ 01B4  B4 00			        mov ah, 0 
+ 01B6  CD 1A				int 1Ah        ;getting clock value 
+ 01B8  8B C2			        mov ax, dx      ;incremented approximat
+				ely 18.206 times per second 
+					;mov dx, 7993 
+					;mov cx, 9781 
+					;mul dx 
+					;add ax, cx 
+ 01BA  33 D2			        xor dx, dx 
+ 01BC  B9 0064			        mov cx, 100 
+ 01BF  F7 F1			        div cx 
+ 01C1  C3			        ret 
+				        ;random number is in range of 1..100 in
+				 dx 
+ 01C2				GetRandomNumber endp 
+				 
+				 
+ 01C2				ListenForInput proc 
+				        ;check which key was pressed 
+ 01C2  B4 01			        mov ah, 01h 
+ 01C4  CD 16			        int 16h 
+				 
+ 01C6  74 6A			        jz leaveListenForInput 
+				 
+ 01C8  B4 00			        mov ah, 00h 
+ 01CA  CD 16			        int 16h 
+				        ;w 
+ 01CC  3C 77			        cmp al, 77h 
+ 01CE  74 0D			        je moveSnakeUp 
+				 
+				        ;s 
+ 01D0  3C 73			        cmp al, 73h 
+ 01D2  74 1E			        je moveSnakeDown 
+				        ;a 
+ 01D4  3C 61			        cmp al, 61h 
+ 01D6  74 2F			        je moveSnakeLeft 
+				        ;d 
+ 01D8  3C 64			        cmp al, 64h 
+ 01DA  74 40			        je moveSnakeRight 
+ 01DC  C3			        ret 
+				 
+ 01DD				        moveSnakeUp: 
+ 01DD  83 3E 01A1 R 00		                cmp directionY, 0 
+ 01E2  75 4D			                jne skip 
+ 01E4  B8 0000			                mov ax, 0  
+ 01E7  BB FFFC			                mov bx, -4 
+ 01EA  89 1E 01A1 R		                mov directionY, bx 
+ 01EE  A3 019F R		                mov directionX, ax 
+ 01F1  C3			                ret 
+ 01F2				        moveSnakeDown: 
+ 01F2  83 3E 01A1 R 00		                cmp directionY, 0 
+ 01F7  75 38			                jne skip 
+ 01F9  B8 0004			                mov ax, 4 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-7
+
+
+ 01FC  BB 0000			                mov bx, 0 
+ 01FF  A3 01A1 R		                mov directionY, ax 
+ 0202  89 1E 019F R		                mov directionX, bx  
+ 0206  C3			                ret 
+ 0207				        moveSnakeLeft: 
+ 0207  83 3E 019F R 00		                cmp directionX, 0 
+ 020C  75 23			                jne skip 
+ 020E  B8 0000			                mov ax, 0 
+ 0211  BB FFFC			                mov bx, -4 
+ 0214  A3 01A1 R		                mov directionY, ax 
+ 0217  89 1E 019F R		                mov directionX, bx 
+ 021B  C3			                ret 
+ 021C				        moveSnakeRight: 
+ 021C  83 3E 019F R 00		                cmp directionX, 0 
+ 0221  75 0E			                jne skip 
+ 0223  B8 0000			                mov ax, 0 
+ 0226  BB 0004			                mov bx, 4 
+ 0229  A3 01A1 R		                mov directionY, ax 
+ 022C  89 1E 019F R		                mov directionX, bx 
+ 0230  C3			                ret 
+ 0231				        skip: 
+ 0231  C3			        ret 
+				 
+ 0232				        leaveListenForInput: 
+ 0232  C3			        ret 
+ 0233				ListenForInput endp 
+				 
+ 0233				MoveHead proc 
+ 0233  8B 16 019F R		        mov dx, directionX 
+ 0237  A1 01A1 R		        mov ax, directionY 
+ 023A  01 16 0001 R		        add currentX, dx 
+ 023E  01 06 0003 R		        add currentY, ax 
+ 0242  C3			        ret 
+ 0243				MoveHead endp  
+				 
+ 0243				SaveHeadPos proc 
+ 0243  B9 0000			        mov cx, 0 
+ 0246  8D 36 00D5 R		                lea si, snakePosY 
+ 024A  B8 0002			                mov ax, 2 
+ 024D  F7 26 019D R		                mul arrayLength 
+ 0251  03 F0			                add si, ax 
+ 0253  A1 0003 R		                mov ax, currentY 
+ 0256  89 04			                mov [si], ax 
+				                 
+ 0258  8D 36 000D R		                lea si, snakePosX 
+ 025C  B8 0002			                mov ax, 2 
+ 025F  F7 26 019D R		                mul arrayLength 
+ 0263  03 F0			                add si, ax 
+ 0265  A1 0001 R		                mov ax, currentX 
+ 0268  89 04			                mov [si], ax 
+				 
+				                 
+ 026A  A1 019D R		                mov ax, arrayLength 
+ 026D  3B 06 000B R		                cmp ax, snakeSize 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-8
+
+
+ 0271  74 05			                je rewriteArray 
+ 0273  FF 06 019D R		                inc arrayLength 
+				 
+ 0277  C3			                ret 
+				 
+ 0278				         rewriteArray: 
+				                ;moving last previous element t
+				o n-1 in x coords 
+				 
+ 0278  B9 0000			                mov cx, 0 
+ 027B				                flipLoop: 
+				 
+ 027B  8D 36 000D R		                                lea si, snakePo
+				sX 
+ 027F  B8 0002			                                mov ax, 2 
+ 0282  F7 E1			                                mul cx 
+ 0284  03 F0			                                add si, ax 
+ 0286  83 C6 02			                                add si, 2 
+ 0289  8B 1C			                                mov bx, [si] 
+ 028B  83 EE 02			                                sub si, 2 
+ 028E  89 1C			                                mov [si], bx 
+ 0290  41			                                inc cx 
+ 0291  3B 0E 019D R		                        cmp cx, arrayLength 
+ 0295  75 E4			                        jne flipLoop 
+				 
+				                ;moving last previous element t
+				o n-1 in y coords 
+ 0297  B9 0000			                mov cx, 0 
+ 029A  49			                dec cx 
+ 029B				                        flipLoop2: 
+ 029B  8D 36 00D5 R		                                lea si, snakePo
+				sY 
+ 029F  B8 0002			                                mov ax, 2 
+ 02A2  F7 E1			                                mul cx 
+ 02A4  03 F0			                                add si, ax 
+ 02A6  83 C6 02			                                add si, 2 
+ 02A9  8B 1C			                                mov bx, [si] 
+ 02AB  83 EE 02			                                sub si, 2 
+ 02AE  89 1C			                                mov [si], bx 
+ 02B0  41			                                inc cx 
+ 02B1  3B 0E 019D R		                        cmp cx, arrayLength 
+ 02B5  75 E4			                        jne flipLoop2 
+				                 
+ 02B7  C3			        ret 
+ 02B8				SaveHeadPos endp 
+				 
+ 02B8				DrawSnake proc near  
+ 02B8  51			push cx 
+ 02B9  BB 0000			        mov bx, 0 
+				        ;mov cx, 3 
+ 02BC  8B 0E 019D R		        mov cx, arrayLength 
+				 
+ 02C0				        DrawSnakeLoop: 
+ 02C0  BE 000D R		                mov si, offset snakePosX 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-9
+
+
+ 02C3  03 F3			                add si, bx 
+ 02C5  8B 04			                mov ax, [si] 
+ 02C7  A3 0001 R		                mov currentX, ax 
+				                 
+ 02CA  BE 00D5 R		                mov si, offset snakePosY 
+ 02CD  03 F3			                add si, bx 
+ 02CF  8B 04			                mov ax, [si] 
+ 02D1  A3 0003 R		                mov currentY, ax 
+				               ; mov currentY, ax 
+ 02D4  83 C3 02			                add bx, 2 
+ 02D7  E8 02E2 R		                call DrawSegment 
+ 02DA  49			                dec cx 
+ 02DB  83 F9 00			                cmp cx, 0 
+ 02DE  7F E0			        jg DrawSnakeLoop 
+				 
+ 02E0  59			pop cx 
+ 02E1  C3			ret 
+ 02E2				DrawSnake endp 
+				 
+				     
+ 02E2				DrawSegment proc near 
+ 02E2  51			    push cx 
+ 02E3  52			    push dx 
+ 02E4  8B 0E 0001 R		        mov cx, currentX 
+ 02E8  8B 16 0003 R		        mov dx, currentY 
+				 
+ 02EC  FE 06 0007 R		        inc color 
+ 02F0  A0 0007 R		        mov al, color 
+ 02F3  3C 0F			        cmp al, 15 
+ 02F5  7D 2A			        jge subbb 
+ 02F7				        ne: 
+hm.asm(441): warning A4016: Reserved word used as symbol: NE
+				         
+ 02F7				        DrawHorizontal: 
+				             
+ 02F7  B4 0C			        mov ah, 0Ch       ;set configuration fo
+				r writing a pixl 
+ 02F9  A0 0007 R		        mov al, color     ;set pixel color 
+ 02FC  B7 00			        mov bh, 0         ;set the page number 
+				 
+ 02FE  CD 10			        int 10h           
+				         
+ 0300  41			        inc cx  
+				          
+				        ;cx - currentX > segmentSize (yes - nex
+				t line, no - continue) 
+ 0301  8B C1			        mov ax, cx 
+ 0303  2B 06 0001 R		        sub ax, currentX 
+ 0307  3B 06 0005 R		        cmp ax, segmentSize 
+ 030B  7E EA			        jng DrawHorizontal   
+				         
+ 030D  8B 0E 0001 R		        mov cx, currentX   ;goes back to initia
+				l column 
+ 0311  42			        inc dx             ;we jump to another 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Page     1-10
+
+
+				line (y)  
+				         
+				        ;dx - currentY  > segmentSize (yes - ex
+				it proc, no - continue) 
+ 0312  8B C2			        mov ax, dx 
+ 0314  2B 06 0003 R		        sub ax, currentY 
+ 0318  3B 06 0005 R		        cmp ax, segmentSize 
+ 031C  7E D9			        jng DrawHorizontal 
+				         
+				      
+ 031E  5A			    pop dx 
+ 031F  59			    pop cx 
+ 0320  C3			    ret    
+ 0321				    subbb: 
+ 0321  2C 0E			    sub al, 14 
+ 0323  A2 0007 R		    mov color, al 
+ 0326  EB CF			    jmp ne 
+ 0328  C3			    ret 
+ 0329				DrawSegment endp 
+				 
+				 
+ 0329				ClearScreen proc near  
+ 0329  50			push ax 
+ 032A  B4 00			    mov ah, 00h 
+ 032C  B0 13			    mov al, 13h 
+ 032E  CD 10			    int 10h 
+				 
+ 0330  B4 08			    mov ah, 08h 
+ 0332  B7 00			    mov bh, 00h 
+ 0334  B3 00			    mov bl, 00h 
+ 0336  CD 10			    int 10h   
+ 0338  58			pop ax 
+ 0339  C3			ret 
+ 033A				ClearScreen endp 
+				 
+				     
+				     
+ 033A				End main 
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Symbols-1
+
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+DGROUP . . . . . . . . . . . . .  	GROUP
+  _DATA  . . . . . . . . . . . .  	01BA	WORD	PUBLIC	'DATA'
+  STACK  . . . . . . . . . . . .  	0100	PARA	STACK	'STACK'
+_TEXT  . . . . . . . . . . . . .  	033A	WORD	PUBLIC	'CODE'
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+APPLEPRESENT . . . . . . . . . .  	L WORD	01A7	_DATA
+ARRAYLENGTH  . . . . . . . . . .  	L WORD	019D	_DATA
+
+CHECKAPPLECOLLISION  . . . . . .  	N PROC	00FD	_TEXT	Length = 0022
+CHECKBOUNARYCOLLISION  . . . . .  	L NEAR	00B1	_TEXT
+CHECKCOLLISIONY  . . . . . . . .  	L NEAR	00ED	_TEXT
+CHECKENDGAME . . . . . . . . . .  	N PROC	00B1	_TEXT	Length = 004C
+CHECKSNAKECOLLISION  . . . . . .  	L NEAR	00CF	_TEXT
+CHECKSNAKECOLLISIONLOOP  . . . .  	L NEAR	00D3	_TEXT
+CHECKTIME  . . . . . . . . . . .  	L NEAR	0046	_TEXT
+CLEARSCREEN  . . . . . . . . . .  	N PROC	0329	_TEXT	Length = 0011
+COLIDED  . . . . . . . . . . . .  	L NEAR	0112	_TEXT
+COLOR  . . . . . . . . . . . . .  	L BYTE	0007	_DATA
+CONTINUECHECK  . . . . . . . . .  	L NEAR	00E0	_TEXT
+COUNT  . . . . . . . . . . . . .  	L WORD	01A9	_DATA
+CURRENTX . . . . . . . . . . . .  	L WORD	0001	_DATA
+CURRENTY . . . . . . . . . . . .  	L WORD	0003	_DATA
+
+DIRECTIONX . . . . . . . . . . .  	L WORD	019F	_DATA
+DIRECTIONY . . . . . . . . . . .  	L WORD	01A1	_DATA
+DISPLAYCOUNT . . . . . . . . . .  	N PROC	00A4	_TEXT	Length = 000D
+DRAWAPPLE  . . . . . . . . . . .  	N PROC	011F	_TEXT	Length = 003F
+DRAWHORIZONTAL . . . . . . . . .  	L NEAR	02F7	_TEXT
+DRAWSEGMENT  . . . . . . . . . .  	N PROC	02E2	_TEXT	Length = 0047
+DRAWSNAKE  . . . . . . . . . . .  	N PROC	02B8	_TEXT	Length = 002A
+DRAWSNAKELOOP  . . . . . . . . .  	L NEAR	02C0	_TEXT
+
+ENDFUNCTION  . . . . . . . . . .  	N PROC	0095	_TEXT	Length = 000F
+ENDGAME  . . . . . . . . . . . .  	L NEAR	0083	_TEXT
+ENDSTRING  . . . . . . . . . . .  	L BYTE	01AC	_DATA
+EXIT . . . . . . . . . . . . . .  	L NEAR	0154	_TEXT
+
+FLIPLOOP . . . . . . . . . . . .  	L NEAR	027B	_TEXT
+FLIPLOOP2  . . . . . . . . . . .  	L NEAR	029B	_TEXT
+
+GETRANDOMNUMBER  . . . . . . . .  	N PROC	01B4	_TEXT	Length = 000E
+
+I  . . . . . . . . . . . . . . .  	L WORD	01B8	_DATA
+
+LEAVELISTENFORINPUT  . . . . . .  	L NEAR	0232	_TEXT
+LISTENFORINPUT . . . . . . . . .  	N PROC	01C2	_TEXT	Length = 0071
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Symbols-2
+
+
+
+MAIN . . . . . . . . . . . . . .  	L NEAR	0000	_TEXT
+MOVEHEAD . . . . . . . . . . . .  	N PROC	0233	_TEXT	Length = 0010
+MOVESNAKEDOWN  . . . . . . . . .  	L NEAR	01F2	_TEXT
+MOVESNAKELEFT  . . . . . . . . .  	L NEAR	0207	_TEXT
+MOVESNAKERIGHT . . . . . . . . .  	L NEAR	021C	_TEXT
+MOVESNAKEUP  . . . . . . . . . .  	L NEAR	01DD	_TEXT
+
+NE . . . . . . . . . . . . . . .  	L NEAR	02F7	_TEXT
+
+OKK  . . . . . . . . . . . . . .  	L NEAR	012F	_TEXT
+
+RANDX  . . . . . . . . . . . . .  	L WORD	01A3	_DATA
+RANDY  . . . . . . . . . . . . .  	L WORD	01A5	_DATA
+REWRITEARRAY . . . . . . . . . .  	L NEAR	0278	_TEXT
+
+SAVEHEADPOS  . . . . . . . . . .  	N PROC	0243	_TEXT	Length = 0075
+SAVEMODE . . . . . . . . . . . .  	L BYTE	0000	_DATA
+SEGMENTSIZE  . . . . . . . . . .  	L WORD	0005	_DATA
+SETAPPLECOORDS . . . . . . . . .  	N PROC	015E	_TEXT	Length = 0056
+SETCOORDS  . . . . . . . . . . .  	L NEAR	014B	_TEXT
+SETX . . . . . . . . . . . . . .  	L NEAR	015E	_TEXT
+SETY . . . . . . . . . . . . . .  	L NEAR	0175	_TEXT
+SKIP . . . . . . . . . . . . . .  	L NEAR	0231	_TEXT
+SNAKEPOSX  . . . . . . . . . . .  	L WORD	000D	_DATA	Length = 0064
+SNAKEPOSY  . . . . . . . . . . .  	L WORD	00D5	_DATA	Length = 0064
+SNAKESIZE  . . . . . . . . . . .  	L WORD	000B	_DATA
+SNAKESPEED . . . . . . . . . . .  	L WORD	0009	_DATA
+SPEED  . . . . . . . . . . . . .  	L BYTE	01AB	_DATA
+STARTOVER  . . . . . . . . . . .  	L NEAR	0012	_TEXT
+SUBBB  . . . . . . . . . . . . .  	L NEAR	0321	_TEXT
+SUBX . . . . . . . . . . . . . .  	L NEAR	018D	_TEXT
+SUBY . . . . . . . . . . . . . .  	L NEAR	01A2	_TEXT
+
+TIMEPREVIOUS . . . . . . . . . .  	L BYTE	0008	_DATA
+
+XEQUAL . . . . . . . . . . . . .  	L NEAR	010B	_TEXT
+
+@CODE  . . . . . . . . . . . . .  	TEXT  _TEXT		
+@CODESIZE  . . . . . . . . . . .  	TEXT  0		
+@DATASIZE  . . . . . . . . . . .  	TEXT  0		
+@FILENAME  . . . . . . . . . . .  	TEXT  hm		
+
+Microsoft (R) Macro Assembler Version 5.00                  10/13/20 15:35:36
+                                                             Symbols-3
+
+
+
+    495 Source  Lines
+    495 Total   Lines
+     78 Symbols
+
+  51096 + 449064 Bytes symbol space free
+
+      1 Warning Errors
+      0 Severe  Errors

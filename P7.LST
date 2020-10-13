@@ -1,0 +1,77 @@
+Microsoft (R) Macro Assembler Version 5.00                  10/16/14 00:10:57
+                                                             Page     1-1
+
+
+ 0000				        data segment 
+ 0000  0A			        dat db 10 
+ 0001				        data ends 
+				 
+				        display macro m1 
+				        mov ah,09h 
+				        lea dx,m1 
+				        int 21h 
+				        endm 
+				 
+ 0000				        code segment 
+				        assume cs:code, ds:data 
+ 0000  B8 ---- R		start:  mov ax,data 
+ 0003  8E D8			        mov ds,ax 
+				 
+ 0005  8D 16 0000 R		        lea dx,[dat] 
+ 0009  B4 0A			        mov ah,0ah 
+ 000B  CD 21			        int 21h 
+				 
+ 000D  B9 000A			        mov cx,000ah 
+ 0010  8D 36 0000 R		        lea si,dat 
+ 0014  8A 04			up:     mov al,[si] 
+ 0016  2C 20			        sub al,20h 
+ 0018  88 04			        mov [si],al 
+ 001A  46			        inc si 
+ 001B  E2 F7			        loop up 
+				 
+				        display dat 
+ 001D  B4 09                 1	        mov ah,09h 
+ 001F  8D 16 0000 R          1	        lea dx,dat 
+ 0023  CD 21                 1	        int 21h 
+				 
+ 0025				        code ends 
+				        end start 
+
+Microsoft (R) Macro Assembler Version 5.00                  10/16/14 00:10:57
+                                                             Symbols-1
+
+
+Macros:
+
+		N a m e			Lines
+
+DISPLAY  . . . . . . . . . . . .  	   3
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+CODE . . . . . . . . . . . . . .  	0025	PARA	NONE	
+DATA . . . . . . . . . . . . . .  	0001	PARA	NONE	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+DAT  . . . . . . . . . . . . . .  	L BYTE	0000	DATA
+
+START  . . . . . . . . . . . . .  	L NEAR	0000	CODE
+
+UP . . . . . . . . . . . . . . .  	L NEAR	0014	CODE
+
+@FILENAME  . . . . . . . . . . .  	TEXT  p7		
+
+
+     31 Source  Lines
+     34 Total   Lines
+      8 Symbols
+
+  51152 + 465392 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors
