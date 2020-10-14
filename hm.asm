@@ -23,7 +23,7 @@
     applePresent dw 0
 
     count dw 0
-    speed db 10
+    period db 10
     again dw 0
 
     endString db 13, 10, '_______________GAME OVER________________', '$', 13, 10
@@ -35,15 +35,16 @@ main:
     mov ax, @data
     mov ds, ax
     
-    mov ah, 0Fh  
+    mov ah, 0Fh        ; read current mode
     int 10h  
     
-    mov saveMode, al
-    mov ah, 0   ; set display mode function.
-    mov al, 13h ; mode 13h = 320x200 pixels, 256 colors.
-    int 10h  ; set it!   
+    mov saveMode, al   ; writes current mode 
+    mov ah, 0          ; set display mode function.
+    mov al, 13h        ; mode 13h = 320x200 pixels, 256 colors.
+    int 10h            ; set it!   
 
     StartOver:
+        ;sets all the variables to initial state
         mov currentX, 160
         mov currentY, 80
         mov snakeSize, 4
@@ -62,22 +63,22 @@ main:
         mov ah, 2Ch ;ch = hour, cl = minute, dh = second, dl = 1/100 second
         int 21h  
 
-        ;Adjusting speed
-        mov bl, speed
-        sub ax, ax
+        ;Adjusting speed 
+        mov bl, period   ;period 
+        xor ax, ax
         mov al, dl
-        div bl   
+        div bl        
 
-        cmp al, timePrevious   ;is the current time equal to previoustime
+        cmp al, timePrevious   ;is the current time equal to previous time
         je checkTime           ;if its same check again
         
         ;if its different, then draw, move, etc
         mov  timePrevious, al  ;update time
 
         ;Adjusting speed
-        sub ax, ax
-        mov al, dl
-        div bl
+ ;       xor ax, ax
+  ;      mov al, dl
+   ;     div bl
 
         call ClearScreen
 
@@ -130,11 +131,11 @@ DisplayCount endp
 
 CheckEndGame proc
         CheckBounaryCollision:
-                cmp currentX, 316
+                cmp currentX, 320
                 jge EndGame
                 cmp currentX, 0
                 jl EndGame
-                cmp currentY, 196
+                cmp currentY, 200
                 jge EndGame
                 cmp currentY, 0
                 jl EndGame
@@ -214,7 +215,7 @@ SetAppleCoords proc near
         ;Setting x for an apple
         SetX:
                 call GetRandomNumber
-                cmp dx, 80
+                cmp dx, 79
                 jge subX
                 mov ax, dx
                 xor dx, dx
@@ -232,7 +233,7 @@ SetAppleCoords proc near
                 mov randY, ax
                 ret
         subX:
-                sub dx, 80
+                sub dx, 79
                 mov randX, dx
                 mov ax, dx
                 xor dx, dx
@@ -435,10 +436,9 @@ DrawSegment proc
         mov cx, currentX
         mov dx, currentY
 
-        
         DrawHorizontal:
             
-        mov ah, 0Ch       ;set configuration for writing a pixl
+        mov ah, 0Ch       ;set configuration for writing a pixel
         mov al, color     ;set pixel color
         mov bh, 0         ;set the page number 
         int 10h          
@@ -469,15 +469,11 @@ DrawSegment endp
 ClearScreen proc  
         push ax
 
-        mov ah, 08h
-        mov bh, 00h
-        mov bl, 00h
-        int 10h  
-        MOV AX,0600H    ;06 TO SCROLL & 00 FOR FULLJ SCREEN
-        MOV BH,11H    ;ATTRIBUTE 7 FOR BACKGROUND AND 1 FOR FOREGROUND
-        MOV CX,0000H    ;STARTING COORDINATES
-        MOV DX,184FH    ;ENDING COORDINATES
-        INT 10H        ;FOR VIDEO DISPLAY
+        mov ax,0600h    ;06 TO SCROLL & 00 FOR FULLJ SCREEN
+        mov bh,11h    ;ATTRIBUTE 7 FOR BACKGROUND AND 1 FOR FOREGROUND
+        mov cx,0000h    ;STARTING COORDINATES
+        mov dx,184Fh    ;ENDING COORDINATES
+        int 10h       ;FOR VIDEO DISPLAY
         
         pop ax
         ret
