@@ -258,7 +258,6 @@ SetAppleCoords proc near
 
 SetAppleCoords endp
 
-
 GetRandomNumber proc
         mov ah, 0
 	int 1Ah        ;getting clock value
@@ -343,7 +342,7 @@ MoveHead proc
 MoveHead endp 
 
 SaveHeadPos proc
-        mov cx, 0
+                mov cx, 0
                 lea si, snakePosY
                 mov ax, 2
                 mul arrayLength
@@ -386,7 +385,7 @@ SaveHeadPos proc
 
                 ;moving last previous element to n-1 in y coords
                 mov cx, 0
-                dec cx
+                ;dec cx
                         flipLoop2:
                                 lea si, snakePosY
                                 mov ax, 2
@@ -443,7 +442,7 @@ DrawSegment proc
         mov bh, 0         ;set the page number 
         int 10h          
         
-        inc cx 
+        inc cx            ;moving x position to right ->
          
         ;cx - currentX > segmentSize (yes - next line, no - continue)
         mov ax, cx
@@ -492,14 +491,14 @@ OutCountInt proc
                 inc cx
                 test ax, ax
                 jnz SplitAndPush
-                mov  dl, 0  ;Column
-                mov  dh, 0   ;Row
-                mov  bh, 0    ;Display page
-                mov  ah, 02h  ;SetCursorPosition
+                mov  dl, 0      ;Column
+                mov  dh, 0      ;Row
+                mov  bh, 0      ;Display page
+                mov  ah, 02h    ;SetCursorPosition
                 int  10h
         PopAndDisplay:
                 pop ax
-                add  ax, '0'
+                add ax, '0'
                 mov dx, ax
                 mov ah, 0Eh
                 int 10h
